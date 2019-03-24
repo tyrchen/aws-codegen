@@ -7,7 +7,7 @@ defmodule AWS.CodeGen.Docstring do
     text
     |> html_to_markdown
     |> split_paragraphs
-    |> Enum.map(&(justify_line(&1)))
+    |> Enum.map(&justify_line(&1))
     |> Enum.join("\n\n")
   end
 
@@ -17,11 +17,12 @@ defmodule AWS.CodeGen.Docstring do
   """
   def format(:erlang, nil), do: ""
   def format(:erlang, ""), do: ""
+
   def format(:erlang, text) do
     "@doc #{text}"
     |> html_to_edoc
     |> split_paragraphs
-    |> Enum.map(&(justify_line(&1, 74, "%% ")))
+    |> Enum.map(&justify_line(&1, 74, "%% "))
     |> Enum.join("\n%%\n")
   end
 
@@ -34,6 +35,7 @@ defmodule AWS.CodeGen.Docstring do
   output.
   """
   def html_to_markdown(nil), do: ""
+
   def html_to_markdown(text) do
     text
     |> convert_links
@@ -57,6 +59,7 @@ defmodule AWS.CodeGen.Docstring do
   `P` tags are replaced with newlines and other tags are left unchanged.
   """
   def html_to_edoc(nil), do: ""
+
   def html_to_edoc(text) do
     text
     |> String.replace("</fullname>", "</fullname>\n\n")
@@ -71,7 +74,7 @@ defmodule AWS.CodeGen.Docstring do
   def split_paragraphs(text) do
     text
     |> String.split("\n")
-    |> Enum.map(&(String.strip(&1)))
+    |> Enum.map(&String.trim(&1))
     |> Enum.reject(&(&1 == ""))
   end
 
@@ -83,20 +86,19 @@ defmodule AWS.CodeGen.Docstring do
   def justify_line(text, max_length \\ 75, indent \\ "  ") do
     text
     |> break_line(max_length)
-    |> Enum.map(&(String.strip(&1)))
+    |> Enum.map(&String.trim(&1))
     |> Enum.reject(&(&1 == ""))
-    |> Enum.map(&("#{indent}#{&1}"))
+    |> Enum.map(&"#{indent}#{&1}")
     |> Enum.join("\n")
   end
 
   defp convert_links(text) do
-    Regex.replace(~r{<a href="(.+?)">(.+?)</a>}, text, "[\\2](\\1)",
-                  global: true)
+    Regex.replace(~r{<a href="(.+?)">(.+?)</a>}, text, "[\\2](\\1)", global: true)
   end
 
   defp break_line(text, max_length) do
-    {lines, current} = List.foldl(String.split(text), {[], ""},
-      fn word, {lines, current} ->
+    {lines, current} =
+      List.foldl(String.split(text), {[], ""}, fn word, {lines, current} ->
         case String.length(current) + 1 + String.length(word) > max_length do
           true ->
             case current == "" do
@@ -104,23 +106,27 @@ defmodule AWS.CodeGen.Docstring do
                 # The current word is the first on the current line, and is
                 # longer than our max_length, so append it as a new line.
                 {lines ++ [word], current}
+
               false ->
                 # The current word exceeds the max length, so append the last
                 # line, and start a new one with the current word.
                 {lines ++ [current], word}
             end
+
           false ->
             case current == "" do
               true ->
                 # The current word is the first on the current line, so append
                 # it as a new line.
                 {lines, word}
+
               false ->
                 # Append the current word to the current line.
                 {lines, "#{current} #{word}"}
             end
         end
       end)
+
     List.flatten(lines ++ [current])
   end
 end

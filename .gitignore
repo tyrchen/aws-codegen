@@ -3,3 +3,5 @@
 /doc
 erl_crash.dump
 *.ez
+vendors
+.elixir_ls
